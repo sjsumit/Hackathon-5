@@ -41,7 +41,6 @@ app.post('/api/student', (req, res) => {
     var student = {
         id: newId,
         ...req.body,
-        currentClass:parseInt(currentClass)
     };
 
     studentArray.push(student);
