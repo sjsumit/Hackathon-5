@@ -1,90 +1,97 @@
 const express = require('express')
-const app = express();
+const app = express()
 const bodyParser = require("body-parser");
-const studentArray = require('./initialData.js');
-const Joi = require('joi');
 const port = 8080
+const studentArray = require("./InitialData.js");
+var http = require("http");
 app.use(express.urlencoded());
-
 // Parse JSON bodies (as sent by API clients)
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-
-app.get('/api/student', (req, res) => {
+// your code goes here
+//console.log(studentArray);
+app.get("/api/student", (req,res)=>{
     res.send(studentArray);
-});
-
-app.get('/api/student/:id', (req, res) => {
-    const id = req.params.id;
-    const student = studentArray.find(student => student.id === parseInt(id));
-    if (!student) {
-        res.status(404).send(`Student with id ${id} was not found!`);
+})
+app.get("/api/student/:id", (req,res)=>{
+    const studentId = req.params.id;
+    const student = studentArray.find(el=> el.id === parseInt(studentId));
+    if(!student){
+        res.status(404).send();
         return;
     }
     res.send(student);
-});
-
-app.post('/api/student', (req, res) => {
-    //req.body
-    const schema = Joi.object({
-        name: Joi.string().required(),
-        currentClass: Joi.number().required(),
-        division: Joi.string().required()
-    });
-    const validationObject = schema.validate(req.body);
-    if (validationObject.error) {
-        res.status(400).send(validationObject.error.details[0].message);
+})
+app.post("/api/student", (req,res)=>{
+    const student= {
+        id: studentArray[studentArray.length-1].id +1,
+        ...req.body,
+        currentClass: parseInt(req.body.currentClass)
+    }
+    if(!student.name || !student.currentClass || !student.division){
+        
+        //res.setHeader('{"content-type":"application/x-www-form-urlencoded"}');
+        res.status(400).send();
         return;
     }
-    const newId=studentArray.length + 1;
-    var student = {
-        id: newId,
-        ...req.body
-    };
-
     studentArray.push(student);
-    res.send({id:newId});
-});
 
-app.put('/api/student/:id', (req, res) => {
-    const id = req.params.id;
-    const studentIndex = studentArray.findIndex(student => student.id === parseInt(id));
+    //res.setHeader(['{"content-type":"application/x-www-form-urlencoded"}']);
+    let id = student.id; 
+    res.json({"id" : +id});
+    // res.json({"id" : +id});
+    res.send({"id":id});
+})
 
-    if (studentIndex===-1) {
-        res.status(400).send("Student with Invalid id");
+app.put("/api/student/:id", (req,res)=>{
+    const studentId = req.params.id;
+    const student = studentArray.find(el => el.id === parseInt(studentId));
+    
+    if(!student){
+        res.status(400).send();
         return;
     }
-
-    const schema = Joi.object({
-        name: Joi.string().required(),
-        currentClass: Joi.number().required(),
-        division: Joi.string().required()
-    });
-
-    const validationObject = schema.validate(req.body);
-    if (validationObject.error) {
-        res.status(400).send("Invalid Update");
+    else if(req.body.name){
+        if(req.body.name.length === 0){
+            res.status(400).send();
+            return; 
+        }
+    }
+    else if(req.body.currentClass){
+        if(!Number.isInteger(req.body.currentClass)){
+            res.status(400).send();
+            return; 
+        }
+    }
+    else if(req.body.division){
+        if(!req.body.division.length === 1 || !req.body.division.match(/[A-Z]/)){
+            res.status(400).send();
+            return; 
+        }
+    }
+    const studentIndex = studentArray.findIndex((el) => el.id === parseInt(studentId));
+    const newStudent= {
+        id: studentId,
+        ...student,
+        ...req.body
+    }
+    let classStudent = Number(newStudent.currentClass); 
+    newStudent.currentClass = classStudent;
+    studentArray.splice(studentIndex, 1, newStudent);
+    //res.setHeader(['{"content-type":"application/x-www-form-urlencoded"}']);
+    res.send(newStudent.name);
+})
+app.delete("/api/student/:id", (req,res)=>{
+    const studentId = req.params.id;
+    const student = studentArray.find(el => el.id === parseInt(studentId));
+    const studentIndex = studentArray.findIndex(el => el.id === parseInt(studentId));
+    if(!student){
+        res.status(404).send();
         return;
     }
-
-    studentArray.splice(studentIndex, 1, {id: parseInt(id),...req.body});
-    res.send(studentArray[studentIndex]);
-});
-
-app.delete('/api/student/:id', (req, res) => {
-    const id = req.params.id;
-    //if id does not exist, return 404
-    const studentIndex = studentArray.findIndex(student => student.id === parseInt(id));
-    if (studentIndex===-1) {
-        res.status(40).send("Student with Invalid id provided");
-        return;
-    }
-    const student = studentArray[studentIndex];
     studentArray.splice(studentIndex, 1);
     res.send(student);
-});
-
-app.listen(port, () => console.log(`App listening on port ${port}!`));
-
+})
+app.listen(port, () => console.log(`App listening on port ${port}!`))
 module.exports = app; 
