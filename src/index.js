@@ -44,7 +44,7 @@ app.post('/api/student', (req, res) => {
     };
 
     studentArray.push(student);
-    res.send({"id":newId});
+    res.send({id:newId});
 });
 
 app.put('/api/student/:id', (req, res) => {
@@ -77,7 +77,7 @@ app.delete('/api/student/:id', (req, res) => {
     //if id does not exist, return 404
     const studentIndex = studentArray.findIndex(student => student.id === parseInt(id));
     if (studentIndex===-1) {
-        res.status(404).send("Student with Invalid id provided");
+        res.status(40).send("Student with Invalid id provided");
         return;
     }
     const student = studentArray[studentIndex];
@@ -87,4 +87,4 @@ app.delete('/api/student/:id', (req, res) => {
 
 app.listen(port, () => console.log(`App listening on port ${port}!`));
 
-module.exports = app;
+module.exports = app; 
